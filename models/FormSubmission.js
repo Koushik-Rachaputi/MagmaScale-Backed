@@ -25,6 +25,7 @@ const FormSubmissionSchema = new mongoose.Schema({
   fundingAmount: Number,
   heardFrom: String,
   additionalInfo: String,
+  pdfFileUrl: String, // New field to store uploaded PDF URL
 }, { timestamps: true });
 
-module.exports = mongoose.model('FormSubmission', FormSubmissionSchema); 
+module.exports = mongoose.model('FormSubmission', FormSubmissionSchema);
