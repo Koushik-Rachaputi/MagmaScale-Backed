@@ -47,6 +47,7 @@ router.get('/', async (req, res) => {
 // POST endpoint for form submission
 router.post('/', upload.single('pdfFile'), async (req, res) => {
   console.log('=== Form Submission Request Start ===');
+  const uploadStartTime = new Date();
 
   try {
     const {
@@ -58,24 +59,66 @@ router.post('/', upload.single('pdfFile'), async (req, res) => {
     } = req.body;
 
     let pdfFileUrl = null;
+    let uploadLog = {
+      success: false,
+      fileName: req.file ? req.file.originalname : null,
+      fileSize: req.file ? req.file.size : null,
+      fileType: req.file ? req.file.mimetype : null,
+      startTime: uploadStartTime,
+      endTime: null,
+      duration: null,
+      error: null
+    };
 
     if (req.file) {
+      console.log(`📁 Starting file upload for: ${req.file.originalname}`);
+      console.log(`📊 File details - Size: ${req.file.size} bytes, Type: ${req.file.mimetype}`);
+      
       const fileKey = `pdfs/${uuidv4()}-${req.file.originalname}`;
+      console.log(`🔑 Generated file key: ${fileKey}`);
 
-      const upload = new Upload({
-        client: s3Client,
-        params: {
-          Bucket: process.env.DO_SPACES_BUCKET,
-          Key: fileKey,
-          Body: req.file.buffer,
-          ContentType: req.file.mimetype,
-          ACL: 'public-read',
-        },
-      });
+      try {
+        const upload = new Upload({
+          client: s3Client,
+          params: {
+            Bucket: process.env.DO_SPACES_BUCKET,
+            Key: fileKey,
+            Body: req.file.buffer,
+            ContentType: req.file.mimetype,
+            ACL: 'public-read',
+          },
+        });
 
-      await upload.done();
+        await upload.done();
+        const uploadEndTime = new Date();
+        const uploadDuration = uploadEndTime - uploadStartTime;
 
-      pdfFileUrl = `https://${process.env.DO_SPACES_BUCKET}.${process.env.DO_SPACES_REGION}.digitaloceanspaces.com/${fileKey}`;
+        pdfFileUrl = `https://${process.env.DO_SPACES_BUCKET}.${process.env.DO_SPACES_REGION}.digitaloceanspaces.com/${fileKey}`;
+        
+        uploadLog = {
+          ...uploadLog,
+          success: true,
+          endTime: uploadEndTime,
+          duration: uploadDuration,
+          fileUrl: pdfFileUrl
+        };
+
+        console.log(`✅ File upload successful - Duration: ${uploadDuration}ms`);
+        console.log(`🔗 File URL: ${pdfFileUrl}`);
+      } catch (uploadError) {
+        uploadLog = {
+          ...uploadLog,
+          endTime: new Date(),
+          duration: new Date() - uploadStartTime,
+          error: uploadError.message
+        };
+        
+        console.error('❌ File upload failed:', uploadError);
+        console.error('📝 Upload details:', uploadLog);
+        throw uploadError;
+      }
+    } else {
+      console.log('ℹ️ No file was uploaded with this submission');
     }
 
     const newForm = new FormSubmission({
@@ -103,12 +146,14 @@ router.post('/', upload.single('pdfFile'), async (req, res) => {
       fundingAmount,
       heardFrom,
       additionalInfo,
-      pdfFileUrl
+      pdfFileUrl,
+      uploadLog // Store the upload log in the form submission
     });
 
     // Save the form submission
     await newForm.save();
-    console.log('Form submission saved successfully');
+    console.log('✅ Form submission saved successfully');
+    console.log('📝 Upload log:', uploadLog);
 
     // Send success response
     res.status(201).json({
@@ -117,7 +162,7 @@ router.post('/', upload.single('pdfFile'), async (req, res) => {
       data: newForm.toObject()
     });
   } catch (error) {
-    console.error('Error submitting form:', error);
+    console.error('❌ Error in form submission:', error);
     res.status(500).json({
       success: false,
       message: 'Error submitting form',

@@ -26,6 +26,17 @@ const FormSubmissionSchema = new mongoose.Schema({
   heardFrom: String,
   additionalInfo: String,
   pdfFileUrl: String, // New field to store uploaded PDF URL
+  uploadLog: {
+    success: Boolean,
+    fileName: String,
+    fileSize: Number,
+    fileType: String,
+    startTime: Date,
+    endTime: Date,
+    duration: Number,
+    error: String,
+    fileUrl: String
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('FormSubmission', FormSubmissionSchema);
