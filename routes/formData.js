@@ -65,6 +65,7 @@ router.get('/', async (req, res) => {
 router.post('/', upload.single('pdfFile'), async (req, res) => {
   console.log('=== Form Submission Request Start ===');
   const uploadStartTime = new Date();
+  const submissionTimestamp = new Date();
 
   try {
     const {
@@ -176,19 +177,26 @@ router.post('/', upload.single('pdfFile'), async (req, res) => {
       heardFrom,
       additionalInfo,
       pdfFileUrl,
-      uploadLog // Store the upload log in the form submission
+      uploadLog,
+      submissionDate: submissionTimestamp
     });
 
     // Save the form submission
     await newForm.save();
     console.log('✅ Form submission saved successfully');
+    console.log('📅 Submission timestamp:', submissionTimestamp.toISOString());
     console.log('📝 Upload log:', uploadLog);
 
     // Send success response
     res.status(201).json({
       success: true,
       message: 'Form submitted successfully',
-      data: newForm.toObject()
+      data: {
+        ...newForm.toObject(),
+        submissionDate: submissionTimestamp,
+        createdAt: newForm.createdAt,
+        updatedAt: newForm.updatedAt
+      }
     });
   } catch (error) {
     console.error('❌ Error in form submission:', error);

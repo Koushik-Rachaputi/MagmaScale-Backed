@@ -26,6 +26,10 @@ const FormSubmissionSchema = new mongoose.Schema({
   heardFrom: String,
   additionalInfo: String,
   pdfFileUrl: String, // New field to store uploaded PDF URL
+  submissionDate: {
+    type: Date,
+    default: Date.now
+  },
   uploadLog: {
     success: Boolean,
     fileName: String,
