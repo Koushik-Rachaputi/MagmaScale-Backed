@@ -7,7 +7,24 @@ const FormSubmission = require('../models/FormSubmission');
 
 const router = express.Router();
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+
+// Configure multer with file size limit and file type filter
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 30 * 1024 * 1024, // 30MB in bytes
+  },
+  fileFilter: (req, file, cb) => {
+    // Check file type
+    if (file.mimetype === 'application/pdf' || 
+        file.mimetype === 'application/vnd.ms-powerpoint' || 
+        file.mimetype === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF and PPT files are allowed!'), false);
+    }
+  }
+});
 
 // GET endpoint for retrieving form submissions
 router.get('/', async (req, res) => {
@@ -71,8 +88,20 @@ router.post('/', upload.single('pdfFile'), async (req, res) => {
     };
 
     if (req.file) {
+      // Validate file size
+      if (req.file.size > 30 * 1024 * 1024) {
+        const error = new Error('File size exceeds 30MB limit');
+        uploadLog = {
+          ...uploadLog,
+          endTime: new Date(),
+          duration: new Date() - uploadStartTime,
+          error: error.message
+        };
+        throw error;
+      }
+
       console.log(`📁 Starting file upload for: ${req.file.originalname}`);
-      console.log(`📊 File details - Size: ${req.file.size} bytes, Type: ${req.file.mimetype}`);
+      console.log(`📊 File details - Size: ${(req.file.size / (1024 * 1024)).toFixed(2)}MB, Type: ${req.file.mimetype}`);
       
       const fileKey = `pdfs/${uuidv4()}-${req.file.originalname}`;
       console.log(`🔑 Generated file key: ${fileKey}`);
