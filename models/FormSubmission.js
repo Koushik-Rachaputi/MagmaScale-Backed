@@ -25,7 +25,8 @@ const FormSubmissionSchema = new mongoose.Schema({
   fundingAmount: Number,
   heardFrom: String,
   additionalInfo: String,
-  pdfFileUrl: String, // New field to store uploaded PDF URL
+  pitchDeck: String,
+  pdfFileUrl: String,
   submissionDate: {
     type: Date,
     default: Date.now

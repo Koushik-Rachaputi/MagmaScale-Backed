@@ -73,7 +73,7 @@ router.post('/', upload.single('pdfFile'), async (req, res) => {
       websiteURL, currentState, lookingFor, companyLinkedIn, foundersLinkedIn,
       industry, problemSolved, startupDescription, targetMarket, numberOfCustomers,
       revenueCurrency, revenueAmount, raisedFunding, fundingCurrency, fundingAmount,
-      heardFrom, additionalInfo
+      heardFrom, additionalInfo, pitchDeck
     } = req.body;
 
     let pdfFileUrl = null;
@@ -176,6 +176,7 @@ router.post('/', upload.single('pdfFile'), async (req, res) => {
       fundingAmount,
       heardFrom,
       additionalInfo,
+      pitchDeck,
       pdfFileUrl,
       uploadLog,
       submissionDate: submissionTimestamp
