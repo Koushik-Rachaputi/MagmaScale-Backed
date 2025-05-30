@@ -26,6 +26,17 @@ const upload = multer({
   }
 });
 
+// Generate project ID
+const generateProjectId = (startupName) => {
+  const timestamp = Date.now().toString().slice(-6);
+  const random = Math.random().toString(36).substring(2, 5).toUpperCase();
+  const namePrefix = startupName
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(0, 3)
+    .toUpperCase();
+  return `${namePrefix}-${timestamp}-${random}`;
+};
+
 // GET endpoint for retrieving form submissions
 router.get('/', async (req, res) => {
   try {
@@ -75,6 +86,9 @@ router.post('/', upload.single('pdfFile'), async (req, res) => {
       revenueCurrency, revenueAmount, raisedFunding, fundingCurrency, fundingAmount,
       heardFrom, additionalInfo, pitchDeck
     } = req.body;
+
+    // Generate project ID
+    const projectId = generateProjectId(startupName);
 
     let pdfFileUrl = null;
     let uploadLog = {
@@ -152,6 +166,7 @@ router.post('/', upload.single('pdfFile'), async (req, res) => {
     }
 
     const newForm = new FormSubmission({
+      projectId,
       role,
       fullName,
       phoneNumber,

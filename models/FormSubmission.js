@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const FormSubmissionSchema = new mongoose.Schema({
+  projectId: {
+    type: String,
+    required: true,
+    unique: true
+  },
   role: String,
   fullName: String,
   phoneNumber: String,

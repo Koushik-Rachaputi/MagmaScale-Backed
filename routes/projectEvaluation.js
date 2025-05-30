@@ -3,18 +3,18 @@ const router = express.Router();
 const ProjectEvaluation = require('../models/ProjectEvaluation');
 const FormSubmission = require('../models/FormSubmission');
 
-// GET evaluation by form submission ID
-router.get('/:formSubmissionId', async (req, res) => {
+// GET evaluation by project ID
+router.get('/:projectId', async (req, res) => {
   try {
-    const { formSubmissionId } = req.params;
+    const { projectId } = req.params;
     
-    const evaluation = await ProjectEvaluation.findOne({ formSubmissionId })
-      .populate('formSubmissionId', 'startupName fullName emailAddress');
+    const evaluation = await ProjectEvaluation.findOne({ projectId })
+      .populate('projectId', 'startupName fullName emailAddress');
     
     if (!evaluation) {
       return res.status(404).json({
         success: false,
-        message: 'No evaluation found for this submission'
+        message: 'No evaluation found for this project'
       });
     }
 
@@ -33,27 +33,27 @@ router.get('/:formSubmissionId', async (req, res) => {
 });
 
 // POST/PUT endpoint for creating or updating evaluation
-router.post('/:formSubmissionId', async (req, res) => {
+router.post('/:projectId', async (req, res) => {
   try {
-    const { formSubmissionId } = req.params;
+    const { projectId } = req.params;
     const updateData = req.body;
 
-    // Verify that the form submission exists
-    const formSubmission = await FormSubmission.findById(formSubmissionId);
+    // Verify that the project exists
+    const formSubmission = await FormSubmission.findOne({ projectId });
     if (!formSubmission) {
       return res.status(404).json({
         success: false,
-        message: 'Form submission not found'
+        message: 'Project not found'
       });
     }
 
     // Find existing evaluation or create new one
-    let evaluation = await ProjectEvaluation.findOne({ formSubmissionId });
+    let evaluation = await ProjectEvaluation.findOne({ projectId });
 
     if (evaluation) {
       // Update existing evaluation
       evaluation = await ProjectEvaluation.findOneAndUpdate(
-        { formSubmissionId },
+        { projectId },
         { 
           $set: {
             ...updateData,
@@ -68,7 +68,7 @@ router.post('/:formSubmissionId', async (req, res) => {
     } else {
       // Create new evaluation
       evaluation = new ProjectEvaluation({
-        formSubmissionId,
+        projectId,
         ...updateData
       });
       await evaluation.save();
@@ -93,7 +93,7 @@ router.post('/:formSubmissionId', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const evaluations = await ProjectEvaluation.find()
-      .populate('formSubmissionId', 'startupName fullName emailAddress')
+      .populate('projectId', 'startupName fullName emailAddress')
       .sort({ lastUpdated: -1 });
 
     res.status(200).json({

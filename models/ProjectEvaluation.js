@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
 
 const ProjectEvaluationSchema = new mongoose.Schema({
-  formSubmissionId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'FormSubmission',
-    required: true
+  projectId: {
+    type: String,
+    required: true,
+    unique: true,
+    ref: 'FormSubmission'
   },
   projectStatus: {
     type: String,
@@ -28,8 +29,7 @@ const ProjectEvaluationSchema = new mongoose.Schema({
   }],
   evaluationChecklist: [{
     name: String,
-    checked: Boolean,
-    notes: String
+    checked: Boolean
   }],
   lastUpdated: {
     type: Date,
