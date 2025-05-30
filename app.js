@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const formRoutes = require('./routes/formData');
+const projectEvaluationRoutes = require('./routes/projectEvaluation');
 
 dotenv.config();
 
@@ -27,7 +28,7 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: 'http://localhost:4200',
+  origin: ['http://localhost:4200', 'http://localhost:8080'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -57,6 +58,7 @@ app.use(passport.session());
 // Setup routes
 app.use('/auth', authRoutes);
 app.use('/form', formRoutes);
+app.use('/evaluation', projectEvaluationRoutes);
 
 // Home route
 app.get('/', (req, res) => {
