@@ -112,15 +112,52 @@ router.post('/:projectId', async (req, res) => {
 
     if (evaluation) {
       console.log('📝 Updating existing evaluation...');
+      
+      // Prepare update operations
+      const updateOperations = {
+        $set: {
+          lastUpdated: new Date()
+        }
+      };
+
+      // Handle round notes updates separately
+      if (updateData.roundNotes) {
+        Object.keys(updateData.roundNotes).forEach(round => {
+          if (Array.isArray(updateData.roundNotes[round])) {
+            // Add each note to the array using $push
+            updateData.roundNotes[round].forEach(note => {
+              if (!updateOperations.$push) {
+                updateOperations.$push = {};
+              }
+              if (!updateOperations.$push[`roundNotes.${round}`]) {
+                updateOperations.$push[`roundNotes.${round}`] = {
+                  $each: []
+                };
+              }
+              updateOperations.$push[`roundNotes.${round}`].$each.push({
+                text: note.text,
+                timestamp: note.timestamp || new Date()
+              });
+            });
+          }
+        });
+        // Remove roundNotes from updateData as we're handling it separately
+        delete updateData.roundNotes;
+      }
+
+      // Add other fields to $set
+      Object.keys(updateData).forEach(key => {
+        if (key !== 'roundNotes') {
+          updateOperations.$set[key] = updateData[key];
+        }
+      });
+
+      console.log('📝 Update operations:', updateOperations);
+
       // Update existing evaluation with new data
       const updatedEvaluation = await ProjectEvaluation.findOneAndUpdate(
         { projectId },
-        { 
-          $set: {
-            ...updateData,
-            lastUpdated: new Date()
-          }
-        },
+        updateOperations,
         { 
           new: true, // Return the updated document
           runValidators: true

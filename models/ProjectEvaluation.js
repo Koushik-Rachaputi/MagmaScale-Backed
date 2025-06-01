@@ -13,10 +13,34 @@ const ProjectEvaluationSchema = new mongoose.Schema({
     default: 'On Hold'
   },
   roundNotes: {
-    firstRound: String,
-    secondRound: String,
-    thirdRound: String,
-    generalNotes: String
+    firstRound: [{
+      text: String,
+      timestamp: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+    secondRound: [{
+      text: String,
+      timestamp: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+    thirdRound: [{
+      text: String,
+      timestamp: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+    generalNotes: [{
+      text: String,
+      timestamp: {
+        type: Date,
+        default: Date.now
+      }
+    }]
   },
   additionalDocuments: [{
     name: String,
