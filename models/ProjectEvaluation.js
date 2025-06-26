@@ -9,8 +9,8 @@ const ProjectEvaluationSchema = new mongoose.Schema({
   },
   projectStatus: {
     type: String,
-    enum: ['Round 1 Cleared', 'Round 2 Cleared', 'Selected', 'Rejected', 'On Hold'],
-    default: 'On Hold'
+    enum: ['New','Round 1 Cleared', 'Round 2 Cleared', 'Selected', 'Rejected', 'On Hold'],
+    default: 'New'
   },
   roundNotes: {
     firstRound: [{
