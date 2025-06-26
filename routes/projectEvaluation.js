@@ -110,16 +110,52 @@ router.post('/:projectId', async (req, res) => {
     console.log('🔍 Checking for existing evaluation...');
     let evaluation = await ProjectEvaluation.findOne({ projectId });
 
+    // --- CHECKLIST LOGIC START ---
+    let updatedChecklist = [];
+    if (evaluation) {
+      // Start with the current checklist
+      updatedChecklist = evaluation.evaluationChecklist.map(item => ({
+        _id: item._id ? item._id.toString() : undefined,
+        name: item.name,
+        checked: item.checked
+      }));
+    }
+
+    if (Array.isArray(updateData.checklist)) {
+      // Create a map for quick lookup
+      const checklistMap = new Map(updatedChecklist.map(item => [item._id, item]));
+      // Process each change
+      updateData.checklist.forEach(change => {
+        if (change.remove) {
+          // Remove item by _id
+          checklistMap.delete(change._id);
+        } else if (checklistMap.has(change._id)) {
+          // Update checked state
+          const item = checklistMap.get(change._id);
+          if (typeof change.checked === 'boolean') item.checked = change.checked;
+          if (typeof change.name === 'string') item.name = change.name;
+        } else {
+          // Add new item
+          checklistMap.set(change._id, {
+            _id: change._id,
+            name: change.name || '',
+            checked: !!change.checked
+          });
+        }
+      });
+      // Convert back to array
+      updatedChecklist = Array.from(checklistMap.values());
+    }
+    // --- CHECKLIST LOGIC END ---
+
     if (evaluation) {
       console.log('📝 Updating existing evaluation...');
-      
       // Prepare update operations
       const updateOperations = {
         $set: {
           lastUpdated: new Date()
         }
       };
-
       // Handle round notes updates separately
       if (updateData.roundNotes) {
         Object.keys(updateData.roundNotes).forEach(round => {
@@ -144,16 +180,17 @@ router.post('/:projectId', async (req, res) => {
         // Remove roundNotes from updateData as we're handling it separately
         delete updateData.roundNotes;
       }
-
       // Add other fields to $set
       Object.keys(updateData).forEach(key => {
-        if (key !== 'roundNotes') {
+        if (key !== 'roundNotes' && key !== 'checklist') {
           updateOperations.$set[key] = updateData[key];
         }
       });
-
+      // Always update the checklist if present
+      if (Array.isArray(updateData.checklist)) {
+        updateOperations.$set.evaluationChecklist = updatedChecklist;
+      }
       console.log('📝 Update operations:', updateOperations);
-
       // Update existing evaluation with new data
       const updatedEvaluation = await ProjectEvaluation.findOneAndUpdate(
         { projectId },
@@ -167,10 +204,16 @@ router.post('/:projectId', async (req, res) => {
       evaluation = updatedEvaluation; // Use the returned updated document
     } else {
       console.log('📝 Creating new evaluation...');
-      evaluation = new ProjectEvaluation({
+      // If creating, use the checklist if provided
+      const newEvalData = {
         projectId,
         ...updateData
-      });
+      };
+      if (Array.isArray(updateData.checklist)) {
+        newEvalData.evaluationChecklist = updatedChecklist;
+        delete newEvalData.checklist;
+      }
+      evaluation = new ProjectEvaluation(newEvalData);
       await evaluation.save();
       console.log('✅ New evaluation created successfully');
     }

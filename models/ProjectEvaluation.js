@@ -52,6 +52,7 @@ const ProjectEvaluationSchema = new mongoose.Schema({
     }
   }],
   evaluationChecklist: [{
+    _id: String,
     name: String,
     checked: Boolean
   }],
