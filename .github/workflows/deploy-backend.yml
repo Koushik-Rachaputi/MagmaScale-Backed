@@ -22,16 +22,12 @@ jobs:
       - name: 📦 Sync Backend Files to Droplet
         run: |
           ssh -o StrictHostKeyChecking=no root@64.227.178.201 'mkdir -p /root/magmascale-backend'
-          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ root@64.227.178.201:/root/magmascale-backend/
+          rsync -avz --delete --exclude='.env' -e "ssh -o StrictHostKeyChecking=no" ./ root@64.227.178.201:/root/magmascale-backend/
 
       - name: 🐳 Build & Deploy with Docker Compose
         run: |
-          ssh -o StrictHostKeyChecking=no root@64.227.178.201 << 'EOF'
-            cd /root/magmascale-backend
-
-            echo "🛑 Stopping any existing containers..."
-            docker-compose down || true
-
-            echo "🔧 Building and starting services..."
+          ssh -o StrictHostKeyChecking=no root@64.227.178.201 '
+            cd /root/magmascale-backend && \
+            docker-compose down || true && \
             docker-compose up -d --build
-          EOF
+          '
