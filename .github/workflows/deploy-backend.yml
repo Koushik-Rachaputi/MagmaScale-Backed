@@ -7,26 +7,31 @@ on:
 
 jobs:
   deploy:
+    name: 🔄 Deploy Backend to Droplet
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 🛎️ Checkout Code
         uses: actions/checkout@v3
 
-      - name: Set up SSH key
+      - name: 🔐 Set Up SSH Access
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
 
-      - name: Copy repo to droplet
+      - name: 📦 Sync Backend Files to Droplet
         run: |
           ssh -o StrictHostKeyChecking=no root@64.227.178.201 'mkdir -p /root/magmascale-backend'
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ root@64.227.178.201:/root/magmascale-backend/
 
-      - name: Build and run Docker Compose on droplet
+      - name: 🐳 Build & Deploy with Docker Compose
         run: |
-          ssh -o StrictHostKeyChecking=no root@64.227.178.201 '
-            cd /root/magmascale-backend && \
-            docker compose down || true && \
-            docker compose up -d --build
-          ' 
+          ssh -o StrictHostKeyChecking=no root@64.227.178.201 << 'EOF'
+            cd /root/magmascale-backend
+
+            echo "🛑 Stopping any existing containers..."
+            docker-compose down || true
+
+            echo "🔧 Building and starting services..."
+            docker-compose up -d --build
+          EOF
