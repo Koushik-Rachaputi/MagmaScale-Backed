@@ -1,0 +1,32 @@
+name: 🚀 Deploy MagmaScale Backend to DigitalOcean Droplet
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
+
+      - name: Copy repo to droplet
+        run: |
+          ssh -o StrictHostKeyChecking=no root@64.227.178.201 'mkdir -p /root/magmascale-backend'
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ root@64.227.178.201:/root/magmascale-backend/
+
+      - name: Build and run Docker Compose on droplet
+        run: |
+          ssh -o StrictHostKeyChecking=no root@64.227.178.201 '
+            cd /root/magmascale-backend && \
+            docker compose down || true && \
+            docker compose up -d --build
+          ' 

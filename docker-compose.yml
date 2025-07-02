@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  backend:
+    build: .
+    container_name: magmascale-backend
+    ports:
+      - "4000:4000"
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/magmascale
+    depends_on:
+      - mongo
+    restart: always
+
+  mongo:
+    image: mongo:6
+    container_name: magmascale-mongo
+    volumes:
+      - mongo_data:/data/db
+    restart: always
+
+volumes:
+  mongo_data: 
